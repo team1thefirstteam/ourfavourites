@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Fallacy Detector</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-slate-800 p-8 rounded-2xl shadow-lg w-full max-w-2xl border-2 border-slate-700">
+        <h1 class="text-3xl font-bold text-center mb-6 text-indigo-400">FastAPI Fallacy Tester</h1>
+
+        <!-- Input Section -->
+        <div class="mb-6">
+            <label for="inputText" class="block text-sm font-medium mb-2 text-slate-300">
+                Text to Analyze:
+            </label>
+            <textarea id="inputText" rows="4" class="w-full p-3 bg-slate-700 rounded-lg text-white border border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200" placeholder="Enter text containing a potential fallacy..."></textarea>
+        </div>
+
+        <!-- Button to send request -->
+        <div class="flex justify-center">
+            <button id="analyzeButton" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800">
+                Analyze Text
+            </button>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultContainer" class="mt-8">
+            <h2 class="text-xl font-semibold mb-3 text-slate-300">API Response:</h2>
+            <pre id="apiResponse" class="bg-slate-900 p-4 rounded-lg overflow-x-auto text-sm text-lime-400 border border-slate-700 whitespace-pre-wrap"></pre>
+        </div>
+
+        <!-- Message Box -->
+        <div id="messageBox" class="fixed inset-0 bg-slate-950 bg-opacity-70 hidden items-center justify-center p-4 z-50">
+            <div class="bg-slate-700 p-6 rounded-2xl shadow-xl border border-slate-600 max-w-sm text-center">
+                <p id="messageText" class="text-white mb-4"></p>
+                <button id="closeButton" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-full transition-colors duration-200">OK</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const analyzeButton = document.getElementById('analyzeButton');
+            const inputText = document.getElementById('inputText');
+            const apiResponse = document.getElementById('apiResponse');
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const closeButton = document.getElementById('closeButton');
+            
+            // Set a default value for easy testing
+            inputText.value = `You can't trust what she says about the new school curriculum. After all, she failed history in college.`;
+
+            // Function to show a custom message box
+            function showMessage(message) {
+                messageText.textContent = message;
+                messageBox.classList.remove('hidden');
+                messageBox.classList.add('flex');
+            }
+
+            // Function to hide the message box
+            closeButton.addEventListener('click', () => {
+                messageBox.classList.remove('flex');
+                messageBox.classList.add('hidden');
+            });
+
+            analyzeButton.addEventListener('click', async () => {
+                // Get the text from the textarea
+                const text = inputText.value.trim();
+                
+                // Show a message if the text is empty
+                if (!text) {
+                    showMessage("Please enter some text to analyze.");
+                    return;
+                }
+
+                // URL of your FastAPI endpoint
+                // IMPORTANT: Change this if your server is not on localhost:8000
+                const apiUrl = "http://127.0.0.1:8000/analyze";
+
+                // Prepare the JSON payload
+                const payload = { text: text };
+
+                // Update UI to indicate loading
+                apiResponse.textContent = 'Analyzing...';
+
+                try {
+                    // Make the POST request using fetch
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    // Check if the response was successful
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    // Parse the JSON response
+                    const data = await response.json();
+
+                    // Display the formatted JSON response
+                    apiResponse.textContent = JSON.stringify(data, null, 2);
+
+                } catch (error) {
+                    // Handle any errors that occur during the fetch operation
+                    apiResponse.textContent = `Error: ${error.message}`;
+                    console.error("Fetch error:", error);
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
